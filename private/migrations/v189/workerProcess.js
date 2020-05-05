@@ -16,11 +16,16 @@ module.exports.getWorkerProcess = () => ({
 
 			// Models
 			this.Rooms = this.db.collection('rocketchat_room');
-			this.RoomEvents = this.db.collection('rocketchat_message');
-			this.Messages = this.db.collection('rocketchat_message_old');
+			this.RoomEvents = this.db.collection('rocketchat_room_event');
+			this.Messages = this.db.collection('rocketchat_message');
+
+			// Add a timeout to close the worker if no first message is received after 15 seconds
+			this.timeout = setTimeout(this.close.bind(this), 15000);
 
 			// Message handler
 			process.on('message', async ({ method, params }) => {
+				clearTimeout(this.timeout);
+
 				console.log(`Worker ${ process.pid }: ${ method }`);
 
 				const result = await this[method](params);
